@@ -123,10 +123,13 @@
         .row-action-btn {
             background: #e5e5ea;
             border: none;
-            font-size: 14px;
+            font-size: 11px;
+            /* Reduced from 14px */
             cursor: pointer;
-            padding: 8px 12px;
-            margin: 0 4px;
+            padding: 6px 8px;
+            /* Reduced from 8px 12px */
+            margin: 0 2px;
+            /* Reduced from 4px */
             border-radius: 8px;
             font-weight: 600;
             transition: background 0.2s;
@@ -152,10 +155,10 @@
 
         .table-row {
             display: grid;
-            grid-template-columns: 50px 1fr 60px 60px 80px 100px;
-            /* Test Point, Description, Start, End, Notes, Actions (Copy+Delete) */
-            gap: 6px;
-            padding: 10px;
+            grid-template-columns: 50px 1fr 50px 50px 70px;
+            /* Test Point, Description (Text), Start, End, Actions */
+            gap: 8px;
+            padding: 12px;
             border-bottom: 1px solid #e5e5ea;
             align-items: center;
             transition: background 0.1s;
@@ -163,10 +166,10 @@
 
         .table-header {
             display: grid;
-            grid-template-columns: 50px 1fr 60px 60px 80px 100px;
-            /* Test Point, Description, Start, End, Notes, Actions */
-            gap: 6px;
-            padding: 10px;
+            grid-template-columns: 50px 1fr 50px 50px 70px;
+            /* Test Point, Description, Start, End, Actions */
+            gap: 8px;
+            padding: 12px;
             background: #f2f2f7;
             font-size: 12px;
             font-weight: 600;
@@ -272,12 +275,14 @@
 
         \n .add-row-button {
             width: 100%;
-            padding: 16px;
+            padding: 24px;
+            /* Further increased for mobile */
             background: white;
             border: none;
             border-top: 1px solid #e5e5ea;
             color: #007AFF;
-            font-size: 16px;
+            font-size: 20px;
+            /* Further increased for visibility */
             font-weight: 500;
             cursor: pointer;
         }
@@ -915,15 +920,48 @@
             </div>
         </div>
 
-        <button class="add-row-button" onclick="app.addRow()">+ Add Test Point</button>
+        <div style="padding: 0 16px; margin-top: 10px;">
+            <button class="primary-button" style="background: white; color: #007AFF; border: 2px solid #e5e5ea;"
+                onclick="app.addRow()">+ Add Test Point</button>
+        </div>
 
         <div class="hack-button-container">
             <div id="selectedPointInfo" class="selected-point-info hidden">
                 <span id="selectedPointName">--</span>
             </div>
             <button id="hackButton" class="hack-button" disabled onclick="app.hackButton()">SELECT A ROW</button>
+            <div style="display: flex; gap: 8px; margin-top: 12px;">
+                <button id="editDetailsBtn" class="primary-button"
+                    style="background: #E5F1FF; color: #007AFF; margin-bottom: 0;" disabled
+                    onclick="app.openEditDetailsModal()">
+                    📝 Edit Description & Notes
+                </button>
+            </div>
             <div style="text-align: center; color: #8e8e93; font-size: 14px; margin-top: 8px;">
                 Or select a row to enter Focus Mode
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Details Modal -->
+    <div id="editDetailsModal" class="confirm-modal-overlay hidden">
+        <div class="confirm-modal">
+            <div class="confirm-modal-title" style="margin-bottom: 20px;">Edit Description</div>
+
+            <div style="text-align: left; margin-bottom: 16px;">
+                <label class="form-label">Description</label>
+                <input type="text" id="modalDescriptionInput" class="form-input" placeholder="e.g. Fire Detection Test">
+            </div>
+
+            <div style="text-align: left; margin-bottom: 24px;">
+                <label class="form-label">Notes</label>
+                <textarea id="modalNotesInput" class="form-input" rows="3" placeholder="Additional notes..."
+                    style="resize: none; font-family: sans-serif;"></textarea>
+            </div>
+
+            <div class="confirm-modal-buttons">
+                <button class="confirm-modal-btn cancel" onclick="app.closeEditDetailsModal()">Cancel</button>
+                <button class="confirm-modal-btn confirm" onclick="app.saveEditDetails()">Save</button>
             </div>
         </div>
     </div>
@@ -1466,20 +1504,15 @@
                                placeholder="#"
                                oninput="app.updatePoint('${point.id}', 'testPoint', this.value)"
                                onclick="event.stopPropagation()">
-                        <input type="text" 
-                               class="table-input" 
-                               value="${point.description || ''}"
-                               placeholder="Description"
-                               oninput="app.updatePoint('${point.id}', 'description', this.value)"
-                               onclick="event.stopPropagation()">
+                        
+                        <!-- Description as Text Only -->
+                        <div class="description-text" style="font-size: 14px; font-weight: 500; color: #1c1c1e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            ${point.description || '<span style="color:#c7c7cc; font-weight:400">(No Desc)</span>'}
+                        </div>
+
                         <div class="time-display">${point.startTime ? this.formatTime(point.startTime) : '--:--'}</div>
                         <div class="time-display">${point.endTime ? this.formatTime(point.endTime) : '--:--'}</div>
-                        <input type="text" 
-                               class="table-input" 
-                               value="${point.notes || ''}"
-                               placeholder="Notes"
-                               oninput="app.updatePoint('${point.id}', 'notes', this.value)"
-                               onclick="event.stopPropagation()">
+                        
                         <div style="display:flex; justify-content:center; gap: 4px;">
                             <button class="row-action-btn duplicate-btn" title="Duplicate" onclick="event.stopPropagation(); app.duplicateRow('${point.id}')">COPY</button>
                             <button class="row-action-btn delete-btn" title="Delete" onclick="event.stopPropagation(); app.deleteRow('${point.id}')">×</button>
@@ -1542,7 +1575,7 @@
                 if (!this.currentFlight) return;
 
                 // Auto-increment logic for new blank row
-                let nextNum = '';
+                let nextNum = '1';
                 if (this.currentFlight.testPoints.length > 0) {
                     const lastPoint = this.currentFlight.testPoints[this.currentFlight.testPoints.length - 1];
                     const lastNum = parseFloat(lastPoint.testPoint);
@@ -1583,7 +1616,8 @@
             selectRow(pointId) {
                 this.selectedRowId = pointId;
                 this.renderTable();
-                this.openFocusMode(pointId);
+                this.updateHackButton(); // Update button info immediately!
+                // Focus mode now only activated via HACK button
             },
 
             openFocusMode(pointId) {
@@ -1670,6 +1704,8 @@
                             self.renderTable();
                             self.updateHackButton();
                             self.updateTimerDisplay();
+                            // Open focus mode after starting
+                            self.openFocusMode(self.selectedRowId);
                         }
                     });
                 } else if (!point.endTime) {
@@ -1705,6 +1741,8 @@
                             self.renderTable();
                             self.updateHackButton();
                             self.updateTimerDisplay();
+                            // Open focus mode after restarting
+                            self.openFocusMode(self.selectedRowId);
                         }
                     });
                 }
@@ -1733,21 +1771,35 @@
                     }
                 }
 
+                const editBtn = document.getElementById('editDetailsBtn');
+
                 // Update Main Hack Button (if exists)
                 if (button) {
+                    // ALWAYS update info text if we have a point
+                    if (infoDiv && infoText) {
+                        if (point) {
+                            infoDiv.classList.remove('hidden');
+                            infoText.textContent = `Test Point ${point.testPoint || '?'} - ${point.description || '(No Description)'}`;
+                        } else {
+                            infoDiv.classList.add('hidden');
+                        }
+                    }
+
+                    // Update Edit Details Button
+                    if (editBtn) {
+                        editBtn.disabled = !point;
+                        editBtn.style.opacity = point ? '1' : '0.5';
+                    }
+
                     if (state === 'idle') {
                         button.textContent = 'SELECT A ROW';
                         button.className = 'hack-button';
                         button.disabled = true;
-                        if (infoDiv) infoDiv.classList.add('hidden');
+                        // infoDiv logic moved up to be always active if point exists
                     } else if (state === 'ready') {
                         button.className = 'hack-button ready';
                         button.textContent = 'HACK (Start)';
                         button.disabled = false;
-                        if (infoDiv && infoText && point) {
-                            infoDiv.classList.remove('hidden');
-                            infoText.textContent = `Test Point ${point.testPoint || '?'} - ${point.description || '(No Description)'}`;
-                        }
                     } else if (state === 'recording') {
                         button.className = 'hack-button recording';
                         button.textContent = 'HACK (Stop)';
@@ -1775,6 +1827,39 @@
                         focusBtn.textContent = 'HACK (Start)';
                     }
                 }
+            },
+
+            // --- Edit Details Modal Logic ---
+            openEditDetailsModal() {
+                if (!this.selectedRowId || !this.currentFlight) return;
+                const point = this.currentFlight.testPoints.find(p => p.id === this.selectedRowId);
+                if (!point) return;
+
+                document.getElementById('modalDescriptionInput').value = point.description || '';
+                document.getElementById('modalNotesInput').value = point.notes || '';
+                document.getElementById('editDetailsModal').classList.remove('hidden');
+                document.getElementById('modalDescriptionInput').focus();
+            },
+
+            closeEditDetailsModal() {
+                document.getElementById('editDetailsModal').classList.add('hidden');
+            },
+
+            saveEditDetails() {
+                if (!this.selectedRowId || !this.currentFlight) return;
+                const point = this.currentFlight.testPoints.find(p => p.id === this.selectedRowId);
+                if (!point) return;
+
+                const newDesc = document.getElementById('modalDescriptionInput').value.trim();
+                const newNotes = document.getElementById('modalNotesInput').value.trim();
+
+                point.description = newDesc;
+                point.notes = newNotes;
+
+                this.saveCurrentFlight();
+                this.renderTable();
+                this.updateHackButton(); // Update info text
+                this.closeEditDetailsModal();
             },
 
             saveCurrentFlight() {
